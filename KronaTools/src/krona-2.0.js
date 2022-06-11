@@ -81,6 +81,7 @@ var svg; // for snapshot mode
 var collapse = true;
 var collapseCheckBox;
 var collapseLast;
+var showMagnitude = false;
 var compress;
 var compressCheckBox;
 var maxAbsoluteDepthText;
@@ -108,6 +109,7 @@ var searchResults;
 var nSearchResults;
 var useHueCheckBox;
 var useHueDiv;
+var showMagnitudeCheckBox;
 var datasetDropDown;
 var datasetButtonLast;
 var datasetButtonPrev;
@@ -1715,6 +1717,11 @@ function Node()
 		{
 			label = this.name;
 		}
+		
+		if (showMagnitude)
+		{
+    		label += ' [' + this.magnitude + ']'
+    	}
 		
 		var flipped = drawTextPolar
 		(
@@ -3675,6 +3682,13 @@ and including collapsed wedges.'
 	position = addOptionElement
 	(
 		position,
+		'<input type="checkbox" id="showMagnitude" checked="checked" />Show magnitudes',
+		'Show magnitudes in labels'
+	);
+	
+	position = addOptionElement
+	(
+		position,
 		'<input type="checkbox" id="collapse" checked="checked" />Collapse',
 		'Collapse wedges that are redundant (entirely composed of another wedge)'
 	);
@@ -4618,6 +4632,7 @@ function showLink()
 		getGetString('dataset', currentDataset, false),
 		getGetString('node', selectedNode.id, false),
 		getGetString('collapse', collapse, true),
+		getGetString('showMagnitude', showMagnitude, true),
 		getGetString('color', useHue(), true),
 		getGetString('depth', maxAbsoluteDepth - 1, false),
 		getGetString('font', fontSize, false),
@@ -5063,6 +5078,10 @@ function load()
 			{
 				case 'collapse':
 					collapse = pair[1] == 'true';
+					break;
+				
+				case 'showMagnitude':
+					showMagnitude = pair[1] == 'true';
 					break;
 				
 				case 'color':
@@ -5695,6 +5714,9 @@ function setCallBacks()
 	canvas.onmousedown = mouseClick;
 	document.onmouseup = mouseUp;
 	keyControl.onclick = toggleKeys;
+	showMagnitudeCheckBox = document.getElementById('showMagnitude');
+	showMagnitudeCheckBox.checked = showMagnitude;
+	showMagnitudeCheckBox.onclick = handleResize;
 	collapseCheckBox = document.getElementById('collapse');
 	collapseCheckBox.checked = collapse;
 	collapseCheckBox.onclick = handleResize;
@@ -6077,10 +6099,10 @@ function snapshot()
 	snapshotMode = false;
 	
 	svg += svgFooter();
-	
-	var snapshotWindow = window.open('', '_blank', '', 'replace=false');
-	snapshotWindow.document.write('<html><body><a href="data:image/svg+xml,' + encodeURIComponent(svg) + '" download="snapshot.svg">Download Snapshot</a></html></body>');
-	snapshotWindow.document.write(svg);
+	var dataUri = 'data:image/svg+xml,' + encodeURIComponent(svg)
+	var string = '<html><body><iframe src="' + dataUri + '" frameborder="0" style="position:absolute; border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe><a style="position:absolute" href="' + dataUri + '" download="snapshot.svg">Download Snapshot</a></html></body>';
+    var win = window.open();
+    win.document.write(string)
 }
 
 function save()
@@ -6214,6 +6236,7 @@ function update()
 		mouseY = -1;
 		
 		collapse = collapseCheckBox.checked;
+		showMagnitude = showMagnitudeCheckBox.checked;
 		compress = true;//compressCheckBox.checked;
 		shorten = true;//shortenCheckBox.checked;
 		
@@ -6593,6 +6616,11 @@ function updateNavigationButtons()
 function useHue()
 {
 	return useHueCheckBox && useHueCheckBox.checked;
+}
+
+function showMagnitudes()
+{
+	return showMagnitudesCheckBox && showMagnitudesCheckBox.checked;
 }
 /*
 function zoomOut()
